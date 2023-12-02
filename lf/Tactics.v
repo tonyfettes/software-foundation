@@ -666,8 +666,38 @@ Proof.
 Theorem eqb_true : forall n m,
   n =? m = true -> n = m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m.
+  generalize dependent m.
+  induction n as [| n' IHn'].
+  - destruct m.
+    + intros Hm. reflexivity.
+    + intros Hm. simpl in Hm. discriminate Hm.
+  - intros m Hm.
+    simpl in Hm.
+    destruct m.
+    + discriminate Hm.
+    + f_equal.
+      apply IHn'.
+      apply Hm.
+Qed.
 (** [] *)
+
+Theorem true_eqb : forall n m,
+  n = m -> (n =? m = true).
+Proof.
+  intros n.
+  induction n as [| n' IHn'].
+  - intros m H.
+    rewrite <- H.
+    reflexivity.
+  - intros m H.
+    destruct m.
+    + discriminate H.
+    + simpl.
+      apply IHn'.
+      injection H as H'.
+      apply H'.
+Qed.      
 
 (** **** Exercise: 2 stars, advanced (eqb_true_informal)
 
@@ -689,7 +719,22 @@ Theorem plus_n_n_injective : forall n m,
   n + n = m + m ->
   n = m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n.
+  induction n as [|n' IHn'].
+  - intros m. destruct m as [|m'].
+    + reflexivity.
+    + intros H.
+      discriminate H.
+  - intros m. destruct m as [|m'].
+    + intros H.
+      discriminate H.
+    + intros H.
+      f_equal.
+      apply IHn'.
+      rewrite <- !plus_n_Sm in H.
+      injection H as Hmn'.
+      apply Hmn'.
+Qed.
 (** [] *)
 
 (** The strategy of doing fewer [intros] before an [induction] to
@@ -796,7 +841,21 @@ Theorem nth_error_after_last: forall (n : nat) (X : Type) (l : list X),
   length l = n ->
   nth_error l n = None.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n X l.
+  intros H.
+  generalize dependent n.
+  induction l as [| h' t' IHl'].
+  - reflexivity.
+  - destruct n as [| n'].
+    + intros H0.
+      simpl.
+      discriminate H0.
+    + simpl.
+      intros Hs.
+      apply IHl'.
+      injection Hs as Hs'.
+      apply Hs'.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -984,7 +1043,31 @@ Theorem combine_split : forall X Y (l : list (X * Y)) l1 l2,
   split l = (l1, l2) ->
   combine l1 l2 = l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X Y l l1 l2.
+  intros H.
+  generalize dependent l2.
+  generalize dependent l1.
+  induction l as [| h' t' IHl'].
+  - intros l1 l2 H.
+    unfold split in H.
+    injection H.
+    intros el2 el1.
+    rewrite <- el1.
+    rewrite <- el2.
+    simpl.
+    reflexivity.
+  - intros l1 l2 H.
+    simpl in H.
+    destruct h'.
+    destruct (split t').
+    injection H as H'.
+    rewrite <- H'.
+    rewrite <- H.
+    simpl.
+    f_equal.
+    apply IHl'.
+    reflexivity.
+Qed.
 (** [] *)
 
 (** The [eqn:] part of the [destruct] tactic is optional; although
@@ -1059,7 +1142,21 @@ Theorem bool_fn_applied_thrice :
   forall (f : bool -> bool) (b : bool),
   f (f (f b)) = f b.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros f b.
+  destruct b eqn:eqb.
+  - destruct (f true) eqn:eqt.
+    + rewrite eqt.
+      apply eqt.
+    + destruct (f false) eqn:eqf.
+      * apply eqt.
+      * apply eqf.
+  - destruct (f false) eqn:eqf.
+    + destruct (f true) eqn:eqt.
+      * apply eqt.
+      * apply eqf.
+    + rewrite eqf.
+      apply eqf.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -1140,7 +1237,20 @@ Proof.
 Theorem eqb_sym : forall (n m : nat),
   (n =? m) = (m =? n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m.
+  generalize dependent m.
+  induction n as [| n' IHn'].
+  - destruct m.
+    + simpl.
+      reflexivity.
+    + simpl.
+      reflexivity.
+  - destruct m.
+    + simpl.
+      reflexivity.
+    + simpl.
+      apply IHn'.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced, optional (eqb_sym_informal)
@@ -1161,7 +1271,15 @@ Theorem eqb_trans : forall n m p,
   m =? p = true ->
   n =? p = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m p.
+  intros neqm meqp.
+  apply eqb_true in neqm.
+  apply eqb_true in meqp.
+  apply true_eqb.
+  transitivity m.
+  - apply neqm.
+  - apply meqp.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced (split_combine)
