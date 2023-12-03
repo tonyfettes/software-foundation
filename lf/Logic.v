@@ -57,7 +57,7 @@ Check plus_claim : Prop.
 
 Theorem plus_claim_is_true :
   plus_claim.
-Proof. reflexivity.  Qed.
+Proof. reflexivity. Qed.
 
 (** We can also write _parameterized_ propositions -- that is,
     functions that take arguments of some type and return a
@@ -143,7 +143,15 @@ Qed.
 Example and_exercise :
   forall n m : nat, n + m = 0 -> n = 0 /\ m = 0.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m H.
+  destruct n.
+  - simpl in H.
+    split.
+    + reflexivity.
+    + apply H.
+  - simpl in H.
+    discriminate H.
+Qed.
 (** [] *)
 
 (** So much for proving conjunctive statements.  To go in the other
@@ -222,7 +230,9 @@ Proof.
 Lemma proj2 : forall P Q : Prop,
   P /\ Q -> Q.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P Q [_ HQ].
+  apply HQ.
+Qed.
 (** [] *)
 
 (** Finally, we sometimes need to rearrange the order of conjunctions
@@ -248,7 +258,12 @@ Theorem and_assoc : forall P Q R : Prop,
   P /\ (Q /\ R) -> (P /\ Q) /\ R.
 Proof.
   intros P Q R [HP [HQ HR]].
-  (* FILL IN HERE *) Admitted.
+  split.
+  - split.
+    + apply HP.
+    + apply HQ.
+  - apply HR.
+Qed.
 (** [] *)
 
 (** Finally, the infix notation [/\] is actually just syntactic sugar for
@@ -312,14 +327,28 @@ Qed.
 Lemma mult_is_O :
   forall n m, n * m = 0 -> n = 0 \/ m = 0.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros [|n'] m H.
+  - simpl in H.
+    left.
+    reflexivity.
+  - simpl in H.
+    right.
+    assert (m = 0 /\ n' * m = 0) as [H' _]. {
+      apply and_exercise.
+      apply H.
+    }
+    apply H'.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard (or_commut) *)
 Theorem or_commut : forall P Q : Prop,
   P \/ Q  -> Q \/ P.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P Q [HP | HQ].
+  - right. apply HP.
+  - left. apply HQ.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
@@ -378,7 +407,12 @@ Proof.
 Theorem not_implies_our_not : forall (P:Prop),
   ~ P -> (forall (Q:Prop), P -> Q).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P np Q p.
+  unfold not in np.
+  apply ex_falso_quodlibet.
+  apply np.
+  apply p.
+Qed.
 (** [] *)
 
 (** Inequality is a very common form of negated statement, so there is a
@@ -447,14 +481,25 @@ Definition manual_grade_for_double_neg_inf : option (nat*string) := None.
 Theorem contrapositive : forall (P Q : Prop),
   (P -> Q) -> (~Q -> ~P).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P Q p_to_q nq.
+  unfold not in nq.
+  intros p.
+  apply nq.
+  apply p_to_q.
+  apply p.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard (not_both_true_and_false) *)
 Theorem not_both_true_and_false : forall P : Prop,
   ~ (P /\ ~P).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P.
+  unfold not.
+  intros [HP HN].
+  apply HN.
+  apply HP.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, advanced (informal_not_PNP)
@@ -479,7 +524,19 @@ Definition manual_grade_for_informal_not_PNP : option (nat*string) := None.
 Theorem de_morgan_not_or : forall (P Q : Prop),
     ~ (P \/ Q) -> ~P /\ ~Q.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P Q H.
+  unfold not in H.
+  unfold not.
+  split.
+  - intros p.
+    apply H.
+    left.
+    apply p.
+  - intros q.
+    apply H.
+    right.
+    apply q.
+Qed.
 (** [] *)
 
 (** Since inequality involves a negation, it also requires a little
@@ -628,19 +685,72 @@ Qed.
 Theorem iff_refl : forall P : Prop,
   P <-> P.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P.
+  assert (id : P -> P). {
+    intros p. apply p.
+  }
+  split. apply id. apply id.
+Qed.
+
+Theorem trans : forall P Q R : Prop,
+  (P -> Q) -> (Q -> R) -> (P -> R).
+Proof.
+  intros P Q R.
+  intros PQ QR.
+  intros p.
+  apply QR.
+  apply PQ.
+  apply p.
+Qed.
 
 Theorem iff_trans : forall P Q R : Prop,
   (P <-> Q) -> (Q <-> R) -> (P <-> R).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P Q R.
+  intros [PQ QP] [QR RQ].
+  split.
+  - apply trans with (Q:=Q).
+    apply PQ. apply QR.
+  - apply trans with (Q:=Q).
+    apply RQ. apply QP.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (or_distributes_over_and) *)
+Theorem or_inj_l : forall {P Q : Prop},
+  P -> (P \/ Q).
+Proof.
+  intros P Q p.
+  apply (or_intro_l P Q p).
+Qed.
+
+Theorem or_inj_r : forall {P Q : Prop},
+  Q -> (P \/ Q).
+Proof.
+  intros P Q q.
+  right.
+  apply q.
+Qed.
+
 Theorem or_distributes_over_and : forall P Q R : Prop,
   P \/ (Q /\ R) <-> (P \/ Q) /\ (P \/ R).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P Q R.
+  split.
+  - intros [p | [q r]].
+    + split.
+      * left. apply p.
+      * left. apply p.
+    + split.
+      * right. apply q.
+      * right. apply r.
+  - intros [pq pr].
+    destruct pq as [p | q].
+    + left. apply p.
+    + destruct pr as [p | r].
+      * left. apply p.
+      * right. split. apply q. apply r.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
