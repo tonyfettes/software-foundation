@@ -860,7 +860,10 @@ Proof.
 Theorem dist_not_exists : forall (X:Type) (P : X -> Prop),
   (forall x, P x) -> ~ (exists x, ~ P x).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X P x [x0 Hx0].
+  apply Hx0.
+  apply x.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard (dist_exists_or)
@@ -871,18 +874,79 @@ Proof.
 Theorem dist_exists_or : forall (X:Type) (P Q : X -> Prop),
   (exists x, P x \/ Q x) <-> (exists x, P x) \/ (exists x, Q x).
 Proof.
-   (* FILL IN HERE *) Admitted.
+  intros X P Q.
+  split.
+  - intros [x PaQ].
+    destruct PaQ.
+    + left.
+      exists x.
+      apply H.
+    + right.
+      exists x.
+      apply H.
+  - intros H.
+    destruct H.
+    + destruct H as [x H'].
+      exists x.
+      left.
+      apply H'.
+    + destruct H as [x H'].
+      exists x.
+      right.
+      apply H'.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, optional (leb_plus_exists) *)
 Theorem leb_plus_exists : forall n m, n <=? m = true -> exists x, m = n+x.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros n m leq.
+  generalize dependent m.
+  induction n as [| n IHn].
+  - intros m.
+    exists m.
+    simpl.
+    reflexivity.
+  - intros m.
+    simpl.
+    destruct m.
+    + intros H.
+      discriminate H.
+    + intros H.
+      destruct IHn with (m:=m).
+      * apply H.
+      * exists x.
+        rewrite H0.
+        reflexivity.
+Qed.
 
 Theorem plus_exists_leb : forall n m, (exists x, m = n+x) -> n <=? m = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
-
+  intros n m H.
+  destruct H as [x H'].
+  destruct x.
+  - rewrite add_comm in H'.
+    simpl in H'.
+    rewrite H'.
+    assert (forall n, (n <=? n) = true) as G. {
+      intros n'.
+      induction n' as [| n' IHn'].
+      - simpl. reflexivity.
+      - simpl. apply IHn'.
+    }
+    apply G.
+  - rewrite H'.
+    destruct n.
+    + simpl. reflexivity.
+    + simpl.
+      assert (forall n x, (n <=? n + x) = true) as G. {
+        intros n1 x1.
+        induction n1 as [| n1' IHn1'].
+        - simpl. reflexivity.
+        - simpl. apply IHn1'.
+      }
+      apply G.
+Qed.
 (** [] *)
 
 (* ################################################################# *)

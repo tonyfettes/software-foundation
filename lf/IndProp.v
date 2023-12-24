@@ -52,8 +52,8 @@ Definition f (n : nat) :=
     recursive _function_ that calculates the total number of steps
     that it takes for such a sequence to reach [1]. *)
 
-Fail Fixpoint reaches_1_in (n : nat) :=
-  if n =? 1 then true
+Fail Fixpoint reaches_1_in (n : nat) : nat :=
+  if n =? 1 then 0
   else 1 + reaches_1_in (f n).
 
 (** This definition is rejected by Coq's termination checker, since
@@ -197,9 +197,26 @@ Proof.
     and_ transitive closure?  How about reflexive, symmetric, and
     transitive closure? *)
 
-(* FILL IN HERE
+Inductive clos_refl_trans {X: Type} (R : X -> X -> Prop) : X -> X -> Prop :=
+  | rt_step (x y : X) : R x y -> clos_refl_trans R x y
+  | rt_refl (x : X) : clos_refl_trans R x x
+  | rt_trans (x y z : X) :
+    clos_refl_trans R x y ->
+    clos_refl_trans R y z ->
+    clos_refl_trans R x z.
 
-    [] *)
+Inductive clos_refl_symm_trans {X : Type} (R : X -> X -> Prop) : X -> X -> Prop :=
+| rst_step (x y : X) :
+  R x y ->
+  clos_refl_symm_trans R x y
+| rst_refl (x : X) : clos_refl_symm_trans R x x
+| rst_symm (x y : X) :
+  clos_refl_symm_trans R x y ->
+  clos_refl_symm_trans R y x
+| rst_trans (x y z : X) :
+  clos_refl_symm_trans R x y ->
+  clos_refl_symm_trans R y z ->
+  clos_refl_symm_trans R x z.
 
 (* ================================================================= *)
 (** ** Example: Permutations *)
@@ -230,9 +247,21 @@ Inductive Perm3 {X : Type} : list X -> list X -> Prop :=
     According to this definition, is [[1;2;3]] a permutation of
     [[3;2;1]]?  Is [[1;2;3]] a permutation of itself? *)
 
-(* FILL IN HERE
+Example Perm3_example0 : Perm3 [3;2;1] [1;2;3].
+Proof.
+  apply perm3_trans with [2;3;1].
+  - apply perm3_swap12.
+  - apply perm3_trans with [2;1;3].
+    + apply perm3_swap23.
+    + apply perm3_swap12.
+Qed.
 
-    [] *)
+Example Perm3_examples : Perm3 [1;2;3] [1;2;3].
+Proof.
+  apply perm3_trans with [2;1;3].
+  - apply perm3_swap12.
+  - apply perm3_swap12.
+Qed.
 
 Example Perm3_example1 : Perm3 [1;2;3] [2;3;1].
 Proof.
