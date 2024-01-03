@@ -717,14 +717,7 @@ Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (or_distributes_over_and) *)
-Theorem or_inj_l : forall {P Q : Prop},
-  P -> (P \/ Q).
-Proof.
-  intros P Q p.
-  apply (or_intro_l P Q p).
-Qed.
-
-Theorem or_inj_r : forall {P Q : Prop},
+Theorem or_intro_r: forall {P Q : Prop},
   Q -> (P \/ Q).
 Proof.
   intros P Q q.
@@ -750,6 +743,19 @@ Proof.
     + destruct pr as [p | r].
       * left. apply p.
       * right. split. apply q. apply r.
+Qed.
+
+Theorem and_dist_or : forall P Q R : Prop,
+  P /\ (Q \/ R) <-> (P /\ Q) \/ (P /\ R).
+Proof.
+  intros P Q R.
+  split.
+  - intros [p [q | r]].
+    + left. split. apply p. apply q.
+    + right. split. apply p. apply r.
+  - intros [[p q] | [p r]].
+    + split. apply p. left. apply q.
+    + split. apply p. right. apply r.
 Qed.
 (** [] *)
 
@@ -897,6 +903,17 @@ Proof.
 Qed.
 (** [] *)
 
+Theorem exists_with_and : forall (X : Type) (P : Prop) (Q : X -> Prop) (x : X),
+  P /\ (exists x, Q x) <-> (exists x, P /\ Q x).
+Proof.
+  intros X P Q x.
+  split.
+  - intros [p [x0 q]].
+    exists x0. split. apply p. apply q.
+  - intros [x0 [p q]].
+    split. apply p. exists x0. apply q.
+Qed.
+
 (** **** Exercise: 3 stars, standard, optional (leb_plus_exists) *)
 Theorem leb_plus_exists : forall n m, n <=? m = true -> exists x, m = n+x.
 Proof.
@@ -1026,6 +1043,105 @@ Qed.
     limitations. *)
 
 (** **** Exercise: 3 stars, standard (In_map_iff) *)
+Theorem and_bot_r : forall A, False <-> False /\ A.
+Proof.
+  intros A.
+  split.
+  - apply ex_falso_quodlibet.
+  - intros [bot a]. apply bot.
+Qed.
+
+Theorem and_bot_l : forall A, False <-> A /\ False.
+Proof.
+  intros A.
+  split.
+  - apply ex_falso_quodlibet.
+  - intros [a bot]. apply bot.
+Qed.
+
+Theorem and_apply : forall (A : Prop) (P : A -> Prop) (a b : A),
+    P a /\ a = b -> P b.
+Proof.
+  intros A P a b [p_a a_eq_b].
+  rewrite a_eq_b in p_a.
+  apply p_a.
+Qed.
+
+Theorem reflexivity_top : forall (X : Type) (x : X),
+    x = x <-> True.
+Proof.
+  split.
+  - reflexivity.
+  - reflexivity.
+Qed.
+
+Theorem and_top_l : forall (P : Prop),
+    P /\ True <-> P.
+Proof.
+  intros P.
+  split.
+  - intros [p t]. apply p.
+  - intros p. split. apply p. reflexivity.
+Qed.
+
+Theorem and_top_r : forall (P : Prop),
+    True /\ P <-> P.
+Proof.
+  intros P.
+  split.
+  - intros [t p]. apply p.
+  - intros p. split. reflexivity. apply p.
+Qed.
+
+Theorem or_top_r : forall (P : Prop),
+    True \/ P <-> True.
+Proof.
+  split.
+  - reflexivity.
+  - intros t. left. reflexivity.
+Qed.
+
+Theorem or_self : forall (P : Prop),
+    P \/ P <-> P.
+Proof.
+  split.
+  - intros [p | p]. apply p. apply p.
+  - intros p. left. apply p.
+Qed.
+
+Theorem and_self : forall (P : Prop),
+    P /\ P <-> P.
+Proof.
+  split.
+  - intros [p _]. apply p.
+  - intros p. split. apply p. apply p.
+Qed.
+
+Theorem exists_bot : forall (X : Type),
+    (exists (x : X), False) <-> False.
+Proof.
+  intros X.
+  split.
+  - intros [_ bot].
+    apply bot.
+  - apply ex_falso_quodlibet.
+Qed.
+
+Theorem exists_cong : forall (X : Type) (P Q : X -> Prop),
+    (forall x, P x <-> Q x) -> ((exists (x : X), P x) <-> (exists (x : X), Q x)).
+Proof.
+  intros X P Q H.
+  split.
+  - intros [x p_x].
+    exists x.
+    apply H in p_x.
+    apply p_x.
+  - intros [x q_x].
+    exists x.
+    apply H in q_x.
+    apply q_x.
+Qed.
+
 Theorem In_map_iff :
   forall (A B : Type) (f : A -> B) (l : list A) (y : B),
          In y (map f l) <->
@@ -1033,15 +1149,55 @@ Theorem In_map_iff :
 Proof.
   intros A B f l y. split.
   { induction l as [|x l' IHl'].
-  (* FILL IN HERE *) Admitted.
+    { apply ex_falso_quodlibet. }
+    { simpl. intros [fx_eq_y | y_in_map_f_l'].
+      { exists x.
+        split.
+        apply fx_eq_y.
+        left.
+        reflexivity. }
+      { apply IHl' in y_in_map_f_l' as [x' [f_x'_eq_y y_in_x'_l']].
+        exists x'. split. apply f_x'_eq_y. right. apply y_in_x'_l'. } } }
+  - intros [x [f_x_eq_y x_in_l]].
+    induction l as [|x' l' IHl'].
+    { simpl in x_in_l. apply ex_falso_quodlibet. apply x_in_l. }
+    { simpl in x_in_l.
+      destruct x_in_l as [x'_eq_x | x_in_l'].
+      { rewrite x'_eq_x.
+        simpl.
+        left.
+        apply f_x_eq_y. }
+      { simpl.
+        right.
+        apply IHl'.
+        apply x_in_l'. } }
+Qed.
 (** [] *)
+
+Theorem or_unit_l : forall A, A <-> False \/ A.
+Proof.
+  intros A.
+  split.
+  apply or_intro_r.
+  intros [bot | a]. apply ex_falso_quodlibet. apply bot. apply a.
+Qed.
 
 (** **** Exercise: 2 stars, standard (In_app_iff) *)
 Theorem In_app_iff : forall A l l' (a:A),
   In a (l++l') <-> In a l \/ In a l'.
 Proof.
-  intros A l. induction l as [|a' l' IH].
-  (* FILL IN HERE *) Admitted.
+  intros A l.
+  induction l as [|hd tl IH].
+  - intros l' a.
+    simpl.
+    apply or_unit_l.
+  - intros l' a.
+    simpl.
+    rewrite <- or_assoc.
+    simpl in IH.
+    rewrite IH.
+    reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, especially useful (All)
@@ -1056,8 +1212,11 @@ Proof.
     lemma below.  (Of course, your definition should _not_ just
     restate the left-hand side of [All_In].) *)
 
-Fixpoint All {T : Type} (P : T -> Prop) (l : list T) : Prop
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint All {T : Type} (P : T -> Prop) (l : list T) : Prop :=
+  match l with
+  | [] => True
+  | hd :: tl => (P hd) /\ (All P tl)
+  end.
 
 Theorem All_In :
   forall T (P : T -> Prop) (l : list T),
