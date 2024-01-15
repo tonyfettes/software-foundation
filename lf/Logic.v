@@ -1223,7 +1223,30 @@ Theorem All_In :
     (forall x, In x l -> P x) <->
     All P l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros T P l.
+  induction l as [|hd l' [IHf IHb]].
+  - simpl. split.
+    + intros H. reflexivity.
+    + intros _. intros x. apply ex_falso_quodlibet.
+  - simpl. split.
+    + intros H.
+      split.
+      * apply H.
+        left.
+        reflexivity.
+      * apply IHf.
+        intros x.
+        intros x_in_l'.
+        apply H.
+        right.
+        apply x_in_l'.
+    + intros [P_hd H] x [hd_eq_x | x_in_l'].
+      * rewrite <- hd_eq_x.
+        apply P_hd.
+      * apply IHb.
+        apply H.
+        apply x_in_l'.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (combine_odd_even)
@@ -1233,8 +1256,11 @@ Proof.
     return a property [P] such that [P n] is equivalent to [Podd n] when
     [n] is [odd] and equivalent to [Peven n] otherwise. *)
 
-Definition combine_odd_even (Podd Peven : nat -> Prop) : nat -> Prop
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition combine_odd_even (Podd Peven : nat -> Prop) : nat -> Prop := fun n =>
+  if odd n then
+    Podd n
+  else
+    Peven n.
 
 (** To test your definition, prove the following facts: *)
 
@@ -1244,7 +1270,17 @@ Theorem combine_odd_even_intro :
     (odd n = false -> Peven n) ->
     combine_odd_even Podd Peven n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros Podd Peven n odd_n_eq_true_to_Podd_n odd_n_eq_false_to_Peven_n.
+  destruct (odd n) eqn:H.
+  - unfold combine_odd_even.
+    rewrite H.
+    apply odd_n_eq_true_to_Podd_n.
+    reflexivity.
+  - unfold combine_odd_even.
+    rewrite H.
+    apply odd_n_eq_false_to_Peven_n.
+    reflexivity.
+Qed.
 
 Theorem combine_odd_even_elim_odd :
   forall (Podd Peven : nat -> Prop) (n : nat),
@@ -1252,7 +1288,11 @@ Theorem combine_odd_even_elim_odd :
     odd n = true ->
     Podd n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros Podd Peven n combine_Podd_Peven_n odd_n_true.
+  unfold combine_odd_even in combine_Podd_Peven_n.
+  rewrite odd_n_true in combine_Podd_Peven_n.
+  apply combine_Podd_Peven_n.
+Qed.
 
 Theorem combine_odd_even_elim_even :
   forall (Podd Peven : nat -> Prop) (n : nat),
@@ -1260,7 +1300,11 @@ Theorem combine_odd_even_elim_even :
     odd n = false ->
     Peven n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros Podd Peven n combine_Podd_Peven_n odd_n_false.
+  unfold combine_odd_even in combine_Podd_Peven_n.
+  rewrite odd_n_false in combine_Podd_Peven_n.
+  apply combine_Podd_Peven_n.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -1682,12 +1726,28 @@ Qed.
 Theorem andb_true_iff : forall b1 b2:bool,
   b1 && b2 = true <-> b1 = true /\ b2 = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros b1 b2.
+  destruct b1.
+  - split.
+    + intros t. split. reflexivity. apply t.
+    + intros [_ t]. apply t.
+  - split.
+    + intros f. split. apply f. discriminate f.
+    + intros [f _]. apply f.
+Qed.
 
 Theorem orb_true_iff : forall b1 b2,
   b1 || b2 = true <-> b1 = true \/ b2 = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros b1 b2.
+  destruct b1.
+  - split.
+    + intros t. left. apply t.
+    + intros [t | _]. apply t. reflexivity.
+  - split.
+    + intros t. right. apply t.
+    + intros [f | t]. discriminate f. apply t.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard (eqb_neq)
@@ -1699,6 +1759,14 @@ Proof.
 Theorem eqb_neq : forall x y : nat,
   x =? y = false <-> x <> y.
 Proof.
+  intros x y.
+  destruct x.
+  - destruct y.
+    + simpl. split.
+      * intros f. discriminate f.
+      * intros f. apply ex_falso_quodlibet. apply f. reflexivity.
+    + 
+
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
