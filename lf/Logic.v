@@ -1554,7 +1554,28 @@ Lemma even_double_conv : forall n, exists k,
   n = if even n then double k else S (double k).
 Proof.
   (* Hint: Use the [even_S] lemma from [Induction.v]. *)
-  (* FILL IN HERE *) Admitted.
+  intros n.
+  induction n as [|n' IHn'].
+  - simpl.
+    exists 0.
+    reflexivity.
+  - destruct (even n') eqn:H.
+    + rewrite even_S.
+      rewrite H.
+      simpl.
+      destruct IHn' as [k' n'_eq_double_k'].
+      exists k'.
+      rewrite n'_eq_double_k'.
+      reflexivity.
+    + rewrite even_S.
+      rewrite H.
+      simpl.
+      destruct IHn' as [k' n'_eq_S_double_k'].
+      exists (S k').
+      simpl.
+      rewrite n'_eq_S_double_k'.
+      reflexivity.
+Qed.
 (** [] *)
 
 (** Now the main theorem: *)
@@ -1563,8 +1584,8 @@ Theorem even_bool_prop : forall n,
 Proof.
   intros n. split.
   - intros H. destruct (even_double_conv n) as [k Hk].
-    rewrite Hk. rewrite H. exists k. reflexivity.
-  - intros [k Hk]. rewrite Hk. apply even_double.
+    rewrite H in Hk. exists k. apply Hk.
+  - intros H. destruct H as [k Hk]. rewrite Hk. apply even_double.
 Qed.
 
 (** In view of this theorem, we can say that the boolean computation
@@ -1759,15 +1780,22 @@ Qed.
 Theorem eqb_neq : forall x y : nat,
   x =? y = false <-> x <> y.
 Proof.
-  intros x y.
-  destruct x.
-  - destruct y.
-    + simpl. split.
-      * intros f. discriminate f.
-      * intros f. apply ex_falso_quodlibet. apply f. reflexivity.
-    + 
-
-  (* FILL IN HERE *) Admitted.
+  intros x y. split.
+  - rewrite <- not_true_iff_false.
+    intros Hb.
+    intros Hp.
+    rewrite Hp in Hb.
+    simpl in Hb.
+    generalize dependent x.
+    induction y as [|y' IHy'].
+    + simpl in Hb. intros x' Hx'. apply Hb. reflexivity.
+    + simpl in Hb. intros x' Hx'. apply (IHy' Hb) with (x := y'). reflexivity.
+  - rewrite <- not_true_iff_false.
+    intros Hp Hb.
+    apply Hp.
+    apply eqb_eq in Hb.
+    apply Hb.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (eqb_list)
@@ -1779,14 +1807,22 @@ Proof.
     definition is correct, prove the lemma [eqb_list_true_iff]. *)
 
 Fixpoint eqb_list {A : Type} (eqb : A -> A -> bool)
-                  (l1 l2 : list A) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+  (l1 l2 : list A) : bool :=
+  match l1, l2 with
+  | [], [] => true
+  | h1 :: t1, h2 :: t2 => eqb h1 h2 && eqb_list eqb t1 t2
+  | _, _ => false
+  end.
+  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *)
 
 Theorem eqb_list_true_iff :
   forall A (eqb : A -> A -> bool),
     (forall a1 a2, eqb a1 a2 = true <-> a1 = a2) ->
     forall l1 l2, eqb_list eqb l1 l2 = true <-> l1 = l2.
 Proof.
+  intros A eqb eqb_true_iff l1 l2. split.
+  - intros H.
+    + 
 (* FILL IN HERE *) Admitted.
 
 (** [] *)
