@@ -1820,11 +1820,25 @@ Theorem eqb_list_true_iff :
     (forall a1 a2, eqb a1 a2 = true <-> a1 = a2) ->
     forall l1 l2, eqb_list eqb l1 l2 = true <-> l1 = l2.
 Proof.
-  intros A eqb eqb_true_iff l1 l2. split.
-  - intros H.
-    + 
-(* FILL IN HERE *) Admitted.
-
+  intros A eqb eqb_true_iff l1.
+  induction l1 as [|hd1 tl1 IHtl1].
+  - intros l2. destruct l2.
+    + split. reflexivity. reflexivity.
+    + split. discriminate. discriminate.
+  - intros l2. induction l2 as [|hd2 tl2 IHtl2].
+    + split. discriminate. discriminate.
+    + simpl.
+      rewrite andb_true_iff.
+      rewrite eqb_true_iff.
+      rewrite IHtl1.
+      split.
+      * intros [hd_eq tl_eq].
+        rewrite hd_eq.
+        rewrite tl_eq.
+        reflexivity.
+      * intros H. injection H as eq_hd.
+        split. apply eq_hd. apply H.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, especially useful (All_forallb)
@@ -1835,13 +1849,23 @@ Proof.
 
 (** Copy the definition of [forallb] from your [Tactics] here
     so that this file can be graded on its own. *)
-Fixpoint forallb {X : Type} (test : X -> bool) (l : list X) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint forallb {X : Type} (test : X -> bool) (l : list X) : bool :=
+  match l with
+  | [] => true
+  | hd :: tl => test hd && forallb test tl
+  end.
 
 Theorem forallb_true_iff : forall X test (l : list X),
   forallb test l = true <-> All (fun x => test x = true) l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X test l. induction l as [|hd tl IHtl].
+  - simpl. split. reflexivity. reflexivity.
+  - simpl. rewrite andb_true_iff. split.
+    + intros [Hhd Htl].
+      split. apply Hhd. apply IHtl. apply Htl.
+    + intros [Hhd Htl].
+      split. apply Hhd. apply IHtl. apply Htl.
+Qed.
 
 (** (Ungraded thought question) Are there any important properties of
     the function [forallb] which are not captured by this
@@ -1982,9 +2006,44 @@ Definition tr_rev {X} (l : list X) : list X :=
 
     Prove that the two definitions are indeed equivalent. *)
 
+Lemma app_assoc : forall {X} (x y z : list X), (x ++ y) ++ z = x ++ (y ++ z).
+Proof.
+  intros X x y z.
+  induction x.
+  - simpl. reflexivity.
+  - simpl.
+    rewrite IHx.
+    reflexivity.
+Qed.
+
+Lemma app_unit : forall {X} (x : list X), x ++ [] = x.
+Proof.
+  intros X x.
+  induction x as [|hd tl IHtl].
+  - simpl. reflexivity.
+  - simpl. rewrite IHtl. reflexivity.
+Qed.
+
 Theorem tr_rev_correct : forall X, @tr_rev X = @rev X.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros X.
+  apply functional_extensionality.
+  intros l.
+  unfold tr_rev.
+  assert (forall (y : list X), rev_append l y = rev l ++ y) as H. {
+    induction l as [|hd tl IHtl].
+    - simpl. reflexivity.
+    - intros y.
+      simpl.
+      rewrite IHtl.
+      rewrite app_assoc.
+      simpl.
+      reflexivity.
+  }
+  rewrite (H []).
+  rewrite app_unit.
+  reflexivity.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
