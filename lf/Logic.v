@@ -2092,6 +2092,21 @@ Proof.
   apply eqb_eq.
 Qed.
 
+Theorem restricted_excluded_middle_eq' : forall (n m : nat),
+  n = m \/ n <> m.
+Proof.
+  intros n.
+  induction n as [|n' IHn'].
+  - destruct m as [|m'].
+    + left. reflexivity.
+    + right. intros contra. discriminate contra.
+  - destruct m as [|m'].
+    + right. intros contra. discriminate contra.
+    + destruct (IHn' m').
+      * left. rewrite H. reflexivity.
+      * right. intros contra. injection contra. apply H.
+Qed.
+
 (** Sadly, this trick only works for decidable propositions. *)
 
 (** It may seem strange that the general excluded middle is not
@@ -2174,7 +2189,14 @@ Qed.
 Theorem excluded_middle_irrefutable: forall (P : Prop),
   ~ ~ (P \/ ~ P).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P H.
+  apply H.
+  right.
+  intros p.
+  apply H.
+  left.
+  apply p.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced (not_exists_dist)
@@ -2195,7 +2217,14 @@ Theorem not_exists_dist :
   forall (X:Type) (P : X -> Prop),
     ~ (exists x, ~ P x) -> (forall x, P x).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros em X P H x.
+  destruct (em (P x)) as [Hf | Hb].
+  - apply Hf.
+  - apply ex_falso_quodlibet.
+    apply H.
+    exists x.
+    apply Hb.
+Qed.
 (** [] *)
 
 (** **** Exercise: 5 stars, standard, optional (classical_axioms)
@@ -2226,8 +2255,64 @@ Definition de_morgan_not_and_not := forall P Q:Prop,
 Definition implies_to_or := forall P Q:Prop,
   (P -> Q) -> (~P \/ Q).
 
-(* FILL IN HERE
+Theorem excluded_middle_implies_peirce : excluded_middle -> peirce.
+Proof.
+  intros em P Q H.
+  destruct (em P) as [Hpf | Hpb].
+  - apply Hpf.
+  - apply H.
+    intros p.
+    apply ex_falso_quodlibet.
+    apply Hpb.
+    apply p.
+Qed.
 
-    [] *)
+Theorem peirce_implies_double_negation_elimination : peirce -> double_negation_elimination.
+Proof.
+  intros pr P H.
+  apply (pr P False).
+  intros Hn.
+  apply ex_falso_quodlibet.
+  apply (H Hn).
+Qed.
 
+Theorem double_negation_elimination_implies_de_morgan_not_and_not :
+  double_negation_elimination -> de_morgan_not_and_not.
+Proof.
+  intros dn P Q H.
+  apply dn.
+  intros HdnPorQ.
+  apply H.
+  split.
+  - intros p.
+    apply HdnPorQ.
+    left.
+    apply p.
+  - intros q.
+    apply HdnPorQ.
+    right.
+    apply q.
+Qed.
+
+Theorem de_morgan_not_and_not_implies_implies_to_or :
+  de_morgan_not_and_not -> implies_to_or.
+Proof.
+  intros de P Q H.
+  apply (de (~ P) Q).
+  intros [HdnP HnQ].
+  apply HdnP.
+  intros p.
+  apply HnQ.
+  apply H.
+  apply p.
+Qed.
+
+Theorem implies_to_or_implies_excluded_middle : implies_to_or -> excluded_middle.
+Proof.
+  intros im P.
+  apply or_commut.
+  apply (im P P).
+  intros p.
+  apply p.
+Qed.
 (* 2023-10-03 16:40 *)
