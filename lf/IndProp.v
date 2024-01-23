@@ -286,6 +286,32 @@ Proof.
        - The number [0] is even.
        - If [n] is even, then [S (S n)] is even. *)
 
+Theorem evenness : forall (n : nat), (exists k : nat, n = double k) <-> even n = true.
+Proof.
+  intros n.
+  split.
+  - intros [k H].
+    generalize dependent n.
+    induction k as [|k' IHk'].
+    + intros n.
+      intros H.
+      simpl in H.
+      rewrite H.
+      simpl.
+      reflexivity.
+    + intros n H.
+      simpl in H.
+      rewrite H.
+      simpl.
+      apply (IHk' (double k')).
+      reflexivity.
+  - intro H.
+    induction n as [|n'].
+    + exists 0.
+      reflexivity.
+    + admit.
+Admitted.
+
 (** (Defining evenness in this way may seem a bit confusing,
     since we have already seen another perfectly good way of doing
     it -- "[n] is even if it is equal to the result of doubling some
