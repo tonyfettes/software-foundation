@@ -286,31 +286,78 @@ Proof.
        - The number [0] is even.
        - If [n] is even, then [S (S n)] is even. *)
 
-Theorem evenness : forall (n : nat), (exists k : nat, n = double k) <-> even n = true.
+Lemma even_S_n_is_odd_n : forall (n : nat), even (S n) = odd n.
 Proof.
   intros n.
-  split.
-  - intros [k H].
-    generalize dependent n.
-    induction k as [|k' IHk'].
-    + intros n.
-      intros H.
-      simpl in H.
-      rewrite H.
+  induction n as [|n' IHn'].
+  - unfold odd.
+    reflexivity.
+  - simpl.
+    unfold odd.
+    rewrite IHn'.
+    unfold odd.
+    rewrite negb_elim.
+    reflexivity.
+Qed.
+
+Lemma odd_S_n_is_even_n : forall (n : nat), odd (S n) = even n.
+Proof.
+  intros n.
+  induction n as [|n' IHn'].
+  - simpl. reflexivity.
+  - unfold odd.
+    simpl.
+    rewrite <- IHn'.
+    unfold odd.
+    rewrite negb_elim.
+    simpl.
+    reflexivity.
+Qed.
+
+Lemma even_or_odd : forall (n : nat), (even n = true -> exists k : nat, n = double k) /\ (odd n = true -> exists k : nat, n = S (double k)).
+Proof.
+  intros n.
+  induction n as [|n' IHn'].
+  - split.
+    + intros H. exists 0. reflexivity.
+    + intros H. discriminate H.
+  - destruct IHn' as [IHn'e IHn'o].
+    split.
+    + intros H.
+      rewrite even_S_n_is_odd_n in H.
+      apply IHn'o in H.
+      destruct H as [k H'].
+      exists (S k).
       simpl.
+      rewrite H'.
       reflexivity.
-    + intros n H.
-      simpl in H.
-      rewrite H.
-      simpl.
-      apply (IHk' (double k')).
+    + intros H.
+      rewrite odd_S_n_is_even_n in H.
+      destruct (IHn'e H) as [k H'].
+      exists k.
+      rewrite H'.
       reflexivity.
-  - intro H.
-    induction n as [|n'].
-    + exists 0.
-      reflexivity.
-    + admit.
-Admitted.
+Qed.
+
+Theorem evenness : forall (n : nat), (exists k : nat, n = double k) -> even n = true.
+Proof.
+  intros n.
+  intros [k H].
+  generalize dependent n.
+  induction k as [|k' IHk'].
+  - intros n.
+    intros H.
+    simpl in H.
+    rewrite H.
+    simpl.
+    reflexivity.
+  - intros n H.
+    simpl in H.
+    rewrite H.
+    simpl.
+    apply (IHk' (double k')).
+    reflexivity.
+Qed.
 
 (** (Defining evenness in this way may seem a bit confusing,
     since we have already seen another perfectly good way of doing
