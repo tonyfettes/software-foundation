@@ -460,7 +460,13 @@ Qed.
 Theorem ev_double : forall n,
   ev (double n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n.
+  induction n as [|n' IHn'].
+  - apply ev_0.
+  - simpl.
+    apply ev_SS.
+    apply IHn'.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -580,7 +586,7 @@ Proof.
 Theorem SSSSev__even : forall n,
   ev (S (S (S (S n)))) -> ev n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  
 (** [] *)
 
 (** **** Exercise: 1 star, standard (ev5_nonsense)
