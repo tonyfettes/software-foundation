@@ -1451,22 +1451,56 @@ End R.
       is a subsequence of [l3], then [l1] is a subsequence of [l3]. *)
 
 Inductive subseq : list nat -> list nat -> Prop :=
-| subseq_refl' (l : list nat) : subseq l l
-| subseq_app (l1 l2 l3 l4 : list nat)
-    (H12 : subseq l1 l2)
-    (H34 : subseq l3 l4) : subseq (l1 ++ l3) (l2 ++ l4)
-| subseq_concat (l1 l2 l3 l4 : list nat)
-    (H12 : subseq l1 l2) : subseq l1 (l3 ++ l2 ++ l4).
+| subseq_init : subseq [] []
+| subseq_cons_tl (hd : nat) (tl tl' : list nat)
+    (Htl : subseq tl tl') : subseq tl (hd :: tl')
+| subseq_cons_hd
+    (hd : nat) (tl tl' : list nat)
+    (Htl : subseq tl tl') : subseq (hd :: tl) (hd :: tl').
 
 Theorem subseq_refl : forall (l : list nat), subseq l l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros l.
+  induction l as [|hd tl IHl].
+  - apply subseq_init.
+  - apply subseq_cons_hd.
+    apply IHl.
+Qed.
+
+Theorem subseq_nil_l : forall (l : list nat), subseq [] l.
+  intros l.
+  induction l as [|hd tl IHl].
+  - apply subseq_init.
+  - apply (subseq_cons_tl hd [] tl IHl).
+Qed.
 
 Theorem subseq_app : forall (l1 l2 l3 : list nat),
   subseq l1 l2 ->
   subseq l1 (l2 ++ l3).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  induction l1 as [|hd1 tl1 IHl1].
+  - intros l2 l3 H.
+    apply subseq_nil_l.
+  - intros l2.
+    induction l2 as [|hd2 tl2 IHl2].
+    + intros l3.
+      intros H.
+      inversion H.
+    + intros l3.
+      intros H.
+      inversion H as [|hd tl tl' Htl|hd tl tl' Htl].
+      subst.
+      * simpl.
+        specialize (IHl2 l3).
+        apply subseq_cons_tl.
+        apply IHl2.
+        apply Htl.
+      * subst.
+        simpl.
+        apply subseq_cons_hd.
+        apply IHl1.
+        apply Htl.
+Qed.
 
 Theorem subseq_trans : forall (l1 l2 l3 : list nat),
   subseq l1 l2 ->
@@ -1475,7 +1509,19 @@ Theorem subseq_trans : forall (l1 l2 l3 : list nat),
 Proof.
   (* Hint: be careful about what you are doing induction on and which
      other things need to be generalized... *)
-  (* FILL IN HERE *) Admitted.
+  intros l1 l2.
+  generalize dependent l1.
+  induction l2 as [|hd tl IHl2].
+  - intros l1 l3.
+    intros H12 H23.
+    inversion H12.
+    subst.
+    apply subseq_nil_l.
+  - intros l1 l3.
+    intros H12 H23.
+    inversion H12 as [|hd2 tl2 tl2' Htl2|hd2 tl2 tl2' Htl2].
+    + subst.
+      
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (R_provability2)
